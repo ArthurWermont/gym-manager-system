@@ -116,7 +116,7 @@ export default function CadastroModalAluno({
     if (!validarValorPlano(newUser.valor_plano))
       e.push("Valor do plano inválido (precisa ser > 0).");
     if (!validarMatriculaInstrutor(newUser.matricula_instrutor))
-      e.push("Matrícula deve ter 5 números.");
+      e.push("Matrícula do Instrutor deve ter 5 números.");
 
     setErrors(e);
 
@@ -127,9 +127,18 @@ export default function CadastroModalAluno({
       alert("Aluno cadastrado com sucesso!");
       onSuccess();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao cadastrar:", error);
-      alert("Erro inesperado ao cadastrar aluno.");
+
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        setErrors([error.response.data.message]); // mostra dentro do painel vermelho
+      } else {
+        setErrors(["Erro inesperado ao cadastrar aluno."]);
+      }
     }
   }
 

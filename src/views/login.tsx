@@ -101,9 +101,9 @@ export default function Login() {
                 </span>
               </div>
               <h1 className="mt-14 text-4xl font-extrabold leading-tight">
-                Treine com <span className="text-yellow-400">constância</span>,
+                Treine com <span className="text-yellow-400">constância</span>
                 <br /> evolua com{" "}
-                <span className="text-yellow-400">controle</span>.
+                <span className="text-yellow-400">controle</span>
               </h1>
               <p className="mt-4 max-w-md text-gray-300">
                 Plataforma integrada para gestão de treinos, avaliações e

@@ -57,16 +57,14 @@ export default function PlanosInstrutor() {
         Gerencie todos os planos criados para seus alunos.
       </p>
 
-      {/* Sem planos → tela especial */}
+      {/* Sem planos */}
       {planos.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-20">
           <div className="bg-gray-800 border border-gray-700 rounded-2xl p-10 shadow-lg text-center">
             <ClipboardList size={60} className="text-yellow-500 mx-auto mb-4" />
-
             <h2 className="text-2xl font-bold text-white mb-2">
               Nenhum plano criado ainda
             </h2>
-
             <p className="text-gray-400 mb-6 max-w-md">
               Comece criando seu primeiro plano de treino.
             </p>
@@ -85,53 +83,92 @@ export default function PlanosInstrutor() {
           {planos.map((p: any) => (
             <div
               key={p.id_plano}
-              className="p-5 bg-gray-800 border border-gray-700 rounded-xl flex justify-between items-start"
+              className={`p-5 border rounded-xl flex justify-between items-start transition
+                ${
+                  p.ativo === 1
+                    ? "bg-gray-800 border-gray-700"
+                    : "bg-gray-700/40 border-gray-600 opacity-50"
+                }
+              `}
             >
-              {/* Info principal */}
+              {/* Informações */}
               <div>
-                <h2 className="text-xl font-bold text-white mb-1">
+                <h2 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
                   {p.descricao || "Plano sem descrição"}
+
+                  {p.ativo === 0 && (
+                    <span className="px-2 py-1 bg-red-600/20 text-red-400 text-xs rounded-md">
+                      Desativado
+                    </span>
+                  )}
                 </h2>
 
+                {/* Aluno */}
                 <p className="text-gray-400 text-sm flex items-center space-x-2">
                   <Users size={15} className="text-yellow-500" />
                   <span>
-                    <b>Aluno(a):</b> {p.nome_aluno}
+                    <b>Aluno(a):</b> {p.aluno?.nome}
                   </span>
                 </p>
 
+                {/* Duração */}
                 <p className="text-gray-400 text-sm flex items-center space-x-2">
                   <Dumbbell size={15} className="text-yellow-500" />
                   <span>
                     <b>Duração:</b> {p.duracao_semanas} semanas
                   </span>
                 </p>
+
+                {/* Criado em */}
+                <p className="text-gray-400 text-sm">
+                  Criado em: {new Date(p.data_criacao).toLocaleDateString()}
+                </p>
+
+                {/* Encerrado em (quando desativado) */}
+                {p.data_termino && (
+                  <p className="text-red-400 text-sm">
+                    Encerrado em:{" "}
+                    {new Date(p.data_termino).toLocaleDateString()}
+                  </p>
+                )}
               </div>
 
               {/* Botões */}
               <div className="flex flex-col items-end space-y-2">
+                {/* Ver fichas — só ativo */}
+
                 <button
                   onClick={() =>
                     (window.location.href = `/instrutor/planos/${p.id_plano}/fichas`)
                   }
-                  className="text-yellow-500 hover:text-yellow-300 font-semibold text-sm"
+                  className={`font-semibold text-sm transition ${
+                    p.ativo === 1
+                      ? "text-yellow-500 hover:text-yellow-300"
+                      : "text-gray-400 hover:text-gray-300"
+                  }`}
                 >
                   Ver Fichas →
                 </button>
+
+                {/* Desativar */}
+                {p.ativo === 1 ? (
+                  <button
+                    onClick={async () => {
+                      if (!confirm("Deseja desativar este plano?")) return;
+
+                      await PlanoService.desativar(p.id_plano);
+                      loadData();
+                    }}
+                    className="text-red-500 hover:text-red-300 font-semibold text-sm"
+                  >
+                    Desativar
+                  </button>
+                ) : (
+                  <span className="text-red-400 text-xs">Plano Inativo</span>
+                )}
               </div>
             </div>
           ))}
-
-          {/* Botão gigante adicionar novo */}
-          {/* <button
-            onClick={() => setOpenModal(true)}
-            className="flex items-center justify-center w-full space-x-2 
-                       p-5 bg-gray-700 border border-dashed border-gray-600 rounded-xl 
-                       text-yellow-500 font-semibold text-lg hover:bg-gray-600/50"
-          >
-            <PlusCircle size={20} />
-            <span>Adicionar Novo Plano</span>
-          </button> */}
         </div>
       )}
 

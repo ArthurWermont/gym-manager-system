@@ -24,13 +24,12 @@ export default function FichasDoPlano() {
 
     const p = await PlanoService.buscarPorId(Number(idPlano));
     const f = await FichaService.listarPorPlano(Number(idPlano));
-    // console.log(p)
-    // console.log(f)
 
     setPlano(p);
     setFichas(f);
     setLoading(false);
   }
+
   useEffect(() => {
     loadData();
   }, []);
@@ -42,9 +41,11 @@ export default function FichasDoPlano() {
       </div>
     );
 
+  const planoDesativado = plano?.ativo === 0;
+
   return (
     <div className="p-6 bg-gray-900 min-h-screen">
-      {/* Header */}
+      {/* HEADER */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-extrabold text-yellow-500 flex items-center space-x-3">
@@ -59,6 +60,12 @@ export default function FichasDoPlano() {
           <p className="text-gray-400">
             Aluno(a): <b className="text-yellow-400">{plano.nome_aluno}</b>
           </p>
+
+          {planoDesativado && (
+            <p className="text-red-400 text-sm mt-1 font-semibold">
+              Este plano está desativado — não é possível criar novas fichas.
+            </p>
+          )}
         </div>
 
         <button
@@ -71,7 +78,7 @@ export default function FichasDoPlano() {
 
       <hr className="border-gray-700 mb-6" />
 
-      {/* Se não houver fichas */}
+      {/* SEM FICHAS */}
       {fichas.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-20">
           <FileSpreadsheet size={60} className="text-yellow-500 mb-4" />
@@ -79,12 +86,19 @@ export default function FichasDoPlano() {
             Nenhuma ficha criada ainda
           </h2>
           <p className="text-gray-400 mb-6">
-            Comece adicionando a primeira ficha do plano.
+            Comece adicionando a primeira ficha.
           </p>
 
           <button
-            onClick={() => setOpenModal(true)}
-            className="bg-yellow-500 text-black px-6 py-3 rounded-lg font-bold flex items-center space-x-2 hover:bg-yellow-400"
+            disabled={planoDesativado}
+            onClick={() => !planoDesativado && setOpenModal(true)}
+            className={`bg-yellow-500 text-black px-6 py-3 rounded-lg font-bold flex items-center space-x-2 
+              ${
+                planoDesativado
+                  ? "opacity-40 cursor-not-allowed"
+                  : "hover:bg-yellow-400"
+              }
+            `}
           >
             <PlusCircle size={20} />
             <span>Criar Ficha</span>
@@ -92,46 +106,61 @@ export default function FichasDoPlano() {
         </div>
       ) : (
         <>
-          {/* Lista de fichas */}
+          {/* LISTA */}
           <div className="space-y-4">
             {fichas.map((f: any) => (
               <div
                 key={f.id_ficha}
-                className="p-5 bg-gray-800 border border-gray-700 rounded-xl flex justify-between items-center hover:bg-gray-700/40 transition"
+                className={`p-5 rounded-xl flex justify-between items-center transition border
+                  ${
+                    f.data_fim
+                      ? "bg-gray-700/40 border-gray-600 opacity-50"
+                      : "bg-gray-800 border-gray-700 hover:bg-gray-700/40"
+                  }
+                `}
               >
                 <div>
-                  <h3 className="text-xl font-bold text-white">{f.nome}</h3>
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    {f.nome}
+
+                    {f.data_fim && (
+                      <span className="px-2 py-1 bg-red-600/20 text-red-400 text-xs rounded-md">
+                        Desativada
+                      </span>
+                    )}
+                  </h3>
+
                   <p className="text-gray-400 text-sm">{f.observacoes}</p>
 
-                  {/* Data início */}
                   <p className="text-gray-400 text-sm">
                     Criada em: {new Date(f.data_inicio).toLocaleDateString()}
                   </p>
 
-                  {/* Data fim (se existir) */}
                   {f.data_fim && (
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-red-400 text-sm">
                       Encerrada em: {new Date(f.data_fim).toLocaleDateString()}
                     </p>
                   )}
                 </div>
+
+                {/* BOTÕES */}
                 <div className="flex items-center space-x-5">
-                  {/* Ver exercícios */}
                   <button
                     onClick={() =>
                       navigate(`/instrutor/fichas/${f.id_ficha}/exercicios`)
                     }
-                    className="text-yellow-500 hover:text-yellow-300 font-semibold"
+                    className={`font-semibold transition ${
+                      f.data_fim
+                        ? "text-gray-400 hover:text-gray-300" // desativada
+                        : "text-yellow-500 hover:text-yellow-300" // ativa
+                    }`}
                   >
                     Ver Exercícios →
                   </button>
 
-                  {/* Desativar */}
                   <button
-                    disabled={!!f.data_fim} // desabilita se tiver data_fim
+                    disabled={!!f.data_fim}
                     onClick={async () => {
-                      if (f.data_fim) return; // segurança extra
-
                       if (confirm("Deseja desativar esta ficha?")) {
                         await FichaService.desativar(f.id_ficha);
                         loadData();
@@ -149,15 +178,20 @@ export default function FichasDoPlano() {
                   <button
                     onClick={async () => {
                       const ok = confirm(
-                        "Tem certeza que deseja excluir esta ficha? Esta ação não pode ser desfeita."
+                        "Tem certeza que deseja excluir esta ficha?"
                       );
-                      if (ok) {
+                      if (!ok) return;
+
+                      try {
                         await FichaService.deletar(f.id_ficha);
                         loadData();
+                      } catch (error: any) {
+                        alert(
+                          error.response?.data?.message || "Erro ao excluir."
+                        );
                       }
                     }}
                     className="text-red-500 hover:text-red-400 p-1"
-                    title="Excluir"
                   >
                     <Trash2 size={18} />
                   </button>
@@ -166,12 +200,17 @@ export default function FichasDoPlano() {
             ))}
           </div>
 
-          {/* Botão adicionar nova */}
+          {/* BOTÃO NOVA FICHA */}
           <button
-            onClick={() => setOpenModal(true)}
-            className="flex items-center justify-center w-full space-x-2 mt-6
-              p-5 bg-gray-700 border border-dashed border-gray-600 rounded-xl 
-              text-yellow-500 font-semibold text-lg hover:bg-gray-600/50"
+            disabled={planoDesativado}
+            onClick={() => !planoDesativado && setOpenModal(true)}
+            className={`flex items-center justify-center w-full space-x-2 mt-6 p-5 rounded-xl border border-dashed 
+              ${
+                planoDesativado
+                  ? "bg-gray-700 border-gray-600 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-700 border-gray-600 text-yellow-500 hover:bg-gray-600/50"
+              }
+            `}
           >
             <PlusCircle size={20} />
             <span>Adicionar Nova Ficha</span>
@@ -179,7 +218,6 @@ export default function FichasDoPlano() {
         </>
       )}
 
-      {/* Modal */}
       <CriarFicha
         open={openModal}
         onClose={() => setOpenModal(false)}

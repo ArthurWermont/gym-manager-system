@@ -17,6 +17,8 @@ export default function ExerciciosFicha() {
   const [loading, setLoading] = useState(true);
   const [openModalCriar, setOpenModalCriar] = useState(false);
   const [editando, setEditando] = useState<ExercicioData | null>(null);
+
+  // ❗ A ficha está finalizada se tiver data_fim
   const fichaFinalizada = ficha?.data_fim != null;
 
   async function loadData() {
@@ -33,7 +35,7 @@ export default function ExerciciosFicha() {
 
   useEffect(() => {
     loadData();
-  }, [idFicha]); // <= executa apenas 1x
+  }, [idFicha]);
 
   if (loading) {
     return (
@@ -42,9 +44,10 @@ export default function ExerciciosFicha() {
       </div>
     );
   }
+
   return (
     <div className="p-6 bg-gray-900 min-h-screen">
-      {/* CABEÇALHO */}
+      {/* HEADER */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-extrabold text-yellow-500">
@@ -56,6 +59,13 @@ export default function ExerciciosFicha() {
               <p className="text-gray-400 mt-1">
                 Ficha: <b className="text-yellow-400">{ficha.nome}</b>
               </p>
+
+              {/* Status da ficha */}
+              {fichaFinalizada && (
+                <p className="text-red-400 text-sm font-semibold mt-1">
+                  Ficha finalizada — não é possível editar/excluir exercícios.
+                </p>
+              )}
             </>
           )}
         </div>
@@ -68,10 +78,11 @@ export default function ExerciciosFicha() {
         </button>
       </div>
 
-      {/* LISTA DE EXERCÍCIOS */}
+      {/* LISTA */}
       {exercicios.length === 0 ? (
         <div className="flex flex-col items-center mt-20">
           <p className="text-gray-400 mb-4">Nenhum exercício ainda</p>
+
           <button
             disabled={fichaFinalizada}
             className={`px-4 py-2 rounded font-bold ${
@@ -83,13 +94,6 @@ export default function ExerciciosFicha() {
           >
             + Criar Exercício
           </button>
-
-          {fichaFinalizada && (
-            <p className="text-gray-400 text-sm mt-2">
-              Esta ficha foi finalizada. Não é possível adicionar novos
-              exercícios.
-            </p>
-          )}
         </div>
       ) : (
         <>
@@ -99,6 +103,7 @@ export default function ExerciciosFicha() {
                 key={ex.id_exercicio}
                 className="bg-gray-800 p-4 rounded-xl border border-gray-700"
               >
+                {/* Nome */}
                 <h2 className="text-xl text-white font-bold">{ex.nome}</h2>
 
                 <p className="text-gray-400 text-sm mt-1">
@@ -124,22 +129,38 @@ export default function ExerciciosFicha() {
                   </p>
                 )}
 
+                {/* Botões */}
                 <div className="flex gap-6 mt-3">
+
+                  {/* EDITAR */}
                   <button
-                    className="text-yellow-400 hover:text-yellow-300"
-                    onClick={() => setEditando(ex)}
+                    disabled={fichaFinalizada}
+                    onClick={() => !fichaFinalizada && setEditando(ex)}
+                    className={
+                      fichaFinalizada
+                        ? "text-gray-500 cursor-not-allowed"
+                        : "text-yellow-400 hover:text-yellow-300"
+                    }
                   >
                     Editar
                   </button>
 
+                  {/* EXCLUIR */}
                   <button
-                    className="text-red-400 hover:text-red-300"
+                    disabled={fichaFinalizada}
                     onClick={async () => {
+                      if (fichaFinalizada) return;
+
                       if (confirm("Excluir exercício?")) {
                         await ExercicioService.deletar(ex.id_exercicio);
                         loadData();
                       }
                     }}
+                    className={
+                      fichaFinalizada
+                        ? "text-gray-600 cursor-not-allowed"
+                        : "text-red-400 hover:text-red-300"
+                    }
                   >
                     Excluir
                   </button>
@@ -148,7 +169,7 @@ export default function ExerciciosFicha() {
             ))}
           </div>
 
-          {/* Botão Adicionar */}
+          {/* Botão adicionar */}
           <button
             disabled={fichaFinalizada}
             onClick={() => !fichaFinalizada && setOpenModalCriar(true)}
@@ -162,9 +183,9 @@ export default function ExerciciosFicha() {
           </button>
 
           {fichaFinalizada && (
-            <p className="text-gray-400 text-sm mt-2 text-center">
-              Esta ficha foi finalizada. Não é possível adicionar novos
-              exercícios.
+            <p className="text-gray-400 text-sm text-center mt-2">
+              Esta ficha foi finalizada. Não é possível adicionar, editar
+              ou excluir exercícios.
             </p>
           )}
         </>

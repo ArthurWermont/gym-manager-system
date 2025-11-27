@@ -94,17 +94,26 @@ export default function Perfil() {
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
 
-    // 🔒 RESTRIÇÃO PARA O CAMPO NOME
     if (name === "nome") {
-      // Apenas letras, acentos e espaços
       if (!/^[A-Za-zÀ-ÿ\s]*$/.test(value)) return;
     }
-    setForm({ ...form, [e.target.name]: e.target.value });
+
+    if (name === "email") {
+      // Permite apenas caracteres seguros
+      if (!/^[A-Za-z0-9._%+@-]*$/.test(value)) return;
+    }
+
+    setForm({ ...form, [name]: value });
   }
 
   async function handleSave() {
     if (!user) return;
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) {
+      alert("E-mail inválido! Use um formato: exemplo@dominio.com");
+      return; // impede salvar
+    }
     setSaving(true);
 
     const campos = {
@@ -193,7 +202,7 @@ export default function Perfil() {
         <div>
           <label className="block text-sm mb-1">E-mail</label>
           <input
-            type="email"
+            type="text"
             name="email"
             value={form.email}
             onChange={handleChange}

@@ -76,6 +76,7 @@ export default function CriarPlano({
         <label className="text-gray-300 text-sm">Duração (semanas)</label>
         <input
           type="number"
+          min="0"
           className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-700 mb-3"
           value={form.duracao_semanas}
           onChange={(e) => setForm({ ...form, duracao_semanas: e.target.value })}
